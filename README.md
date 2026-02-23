@@ -1,88 +1,70 @@
 # BitLoader
 
-轻量级 macOS USB 引导盘制作工具。
+BitLoader 是一款专为 macOS 用户设计的 USB 启动盘制作工具。它摒弃了复杂的命令行操作，以简洁直观的图形界面，让你只需几步就能将系统镜像写入 U 盘，轻松创建可启动的安装盘或急救盘。
 
-## 项目结构
+无论是安装 Linux 系统、制作 macOS 启动盘，还是创建系统急救工具，BitLoader 都能帮你快速完成。内置的压缩镜像支持让你无需手动解压，智能设备识别和安全确认机制则确保操作过程安全可靠。
 
-```
-bitloader/BitLoader/
-├── BitLoaderApp.swift          # App 入口
-├── Info.plist                  # 应用配置
-├── Assets.xcassets/            # 资源文件
-├── Models/                     # 数据模型
-│   ├── USBDevice.swift
-│   ├── FlashTask.swift
-│   └── AppState.swift
-├── ViewModels/                 # 视图模型
-│   └── FlasherViewModel.swift
-├── Services/                   # 核心服务
-│   ├── DeviceEnumerator.swift
-│   ├── ImageWriter.swift
-│   └── CompressionHandler.swift
-├── Views/                      # UI 视图
-│   ├── ContentView.swift
-│   ├── ImageSelectorView.swift
-│   ├── DeviceSelectorView.swift
-│   ├── ProgressPanelView.swift
-│   └── ConfirmationDialog.swift
-└── Utils/                      # 工具类
-    ├── FormatUtils.swift
-    ├── DiskUtils.swift
-    └── SecurityUtils.swift
-```
+## 主要功能
 
-## 在 Xcode 中创建项目
+- 🚀 **支持多种镜像格式**：ISO、IMG、DMG
+- 📦 **自动解压压缩镜像**：内置支持 GZ、XZ、ZIP 格式，无需手动解压
+- 🔌 **智能设备识别**：自动检测并列出所有 USB 存储设备
+- 📊 **实时进度显示**：写入过程清晰可见，随时掌握进度
+- ✅ **写入后验证**：确保数据完整写入，提高启动盘可靠性
+- ⚠️ **安全确认机制**：写入前弹出确认，防止误操作
 
-1. 打开 Xcode，选择 **File → New → Project**
-2. 选择 **macOS → App**
-3. 配置项目：
-   - **Product Name**: `BitLoader`
-   - **Team**: 你的开发者账号
-   - **Organization Identifier**: `net.yingou`
-   - **Bundle Identifier**: `net.yingou.bitloader`
-   - **Interface**: `SwiftUI`
-   - **Language**: `Swift`
-   - **Storage**: `None`
-4. 选择保存位置为 `bitloader/` 目录（与现有源码同级的父目录）
-5. 创建后，删除 Xcode 自动生成的文件：
-   - `BitLoaderApp.swift`
-   - `ContentView.swift`
-   - `Assets.xcassets/`
-   - `Info.plist`（如有）
-6. 将现有源码文件拖入 Xcode 项目：
-   - 右键点击项目导航中的 `BitLoader` 文件夹
-   - 选择 **Add Files to "BitLoader"...**
-   - 选择 `BitLoader/` 目录下的所有子文件夹
-   - 确保勾选 **Copy items if needed** 和 **Create groups**
-7. 设置 Info.plist：
-   - 选择项目 → Target → Build Settings
-   - 搜索 `Info.plist`
-   - 将 `Info.plist File` 设置为 `BitLoader/Info.plist`
+## 系统要求
 
-## 依赖
+- macOS 13.0 或更高版本
 
-- macOS 13.0+
-- Xcode 15.0+
-- Swift 5.9+
+## 使用指南
 
-## 功能
+### 1. 准备镜像文件
 
-- USB 设备自动检测与枚举
-- 支持 ISO/IMG/DMG 镜像
-- 支持压缩镜像（GZ/XZ/ZIP）
-- 写入进度实时显示
-- 写入前安全确认
-- 写入后数据验证
+下载你需要的系统镜像文件（如 macOS、Linux 发行版的 ISO/IMG/DMG 文件）。
 
-## 构建
+### 2. 插入 U 盘
 
-```bash
-# Debug
-xcodebuild -project BitLoader.xcodeproj -scheme BitLoader -configuration Debug
+将 U 盘插入 Mac。**注意：U 盘内的所有数据将被清空，请提前备份重要文件。**
 
-# Release
-xcodebuild -project BitLoader.xcodeproj -scheme BitLoader -configuration Release
-```
+### 3. 启动 BitLoader
+
+打开 BitLoader 应用。
+
+### 4. 选择镜像文件
+
+点击「选择镜像」按钮，浏览并选择你下载的系统镜像文件。
+
+### 5. 选择目标设备
+
+在设备列表中选择你的 U 盘。应用会自动显示所有可写的 USB 存储设备。
+
+### 6. 开始写入
+
+点击「写入」按钮，在确认对话框中再次确认后，写入过程将自动开始。
+
+### 7. 等待完成
+
+等待进度条走完并完成验证。完成后，你的可启动 U 盘就制作好了！
+
+## 注意事项
+
+⚠️ **重要提示**：
+- 写入操作会**格式化并清空**目标 U 盘的所有数据
+- 请务必在操作前备份 U 盘中的重要文件
+- 写入过程中请勿拔出 U 盘或关闭应用
+- 建议使用容量足够的 U 盘（通常 8GB 或以上）
+
+## 常见问题
+
+**Q: 支持制作哪些系统的启动盘？**  
+A: 支持任何提供 ISO/IMG/DMG 镜像的系统，包括 macOS、Linux 发行版（Ubuntu、Fedora 等）、Windows PE 等。
+
+**Q: 写入速度慢怎么办？**  
+A: 写入速度主要取决于 U 盘的写入性能和接口类型（USB 3.0 更快）。大容量镜像通常需要 10-30 分钟。
+
+**Q: 写入后无法启动？**  
+A: 请确认：1）镜像文件完整；2）写入过程未被中断；3）目标设备支持从该 U 盘启动。
 
 ## 许可证
 
