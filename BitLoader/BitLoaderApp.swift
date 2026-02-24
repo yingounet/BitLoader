@@ -5,7 +5,7 @@ struct BitLoaderApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .frame(minWidth: 520, minHeight: 480)
+                .frame(minWidth: 780, minHeight: 520)
         }
         .windowStyle(.automatic)
         .windowResizability(.contentSize)
@@ -73,6 +73,7 @@ struct SettingsView: View {
                 }
         }
         .frame(width: 400, height: 300)
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -103,21 +104,30 @@ struct GeneralSettingsView: View {
 struct AboutSettingsView: View {
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "externaldrive.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.blue)
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Theme.Colors.accent.opacity(0.15))
+                    .frame(width: 80, height: 80)
+                
+                Image(systemName: "externaldrive.fill")
+                    .font(.system(size: 40, weight: .medium))
+                    .foregroundColor(Theme.Colors.accent)
+            }
             
             Text("BitLoader")
                 .font(.title)
                 .fontWeight(.bold)
+                .foregroundColor(Theme.Colors.textPrimary)
             
             Text("版本 1.0.0")
-                .foregroundStyle(.secondary)
+                .foregroundColor(Theme.Colors.textSecondary)
             
             Text("轻量级 USB 引导盘制作工具")
                 .font(.subheadline)
+                .foregroundColor(Theme.Colors.textSecondary)
             
             Divider()
+                .background(Theme.Colors.cardBorder)
             
             VStack(spacing: 8) {
                 Link("GitHub", destination: URL(string: "https://github.com/yingouqlj/bitloader")!)
@@ -128,9 +138,10 @@ struct AboutSettingsView: View {
             
             Text("© 2026 BitLoader")
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundColor(Theme.Colors.textTertiary)
         }
         .padding()
+        .background(Theme.Colors.background)
     }
 }
 

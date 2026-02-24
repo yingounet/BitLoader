@@ -6,45 +6,50 @@ struct ContentView: View {
     @State private var confirmationInput = ""
     
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 0) {
             headerView
             
-            Divider()
-            
-            ImageSelectorView(
-                selectedURL: $viewModel.selectedImageURL,
-                imageSize: viewModel.imageSize,
-                isWriting: viewModel.isWriting,
-                onSelect: { viewModel.selectImage() }
-            )
-            
-            Divider()
-            
-            DeviceSelectorView(
-                devices: viewModel.devices,
-                selectedDevice: $viewModel.selectedDevice,
-                isWriting: viewModel.isWriting,
-                onRefresh: { viewModel.refreshDevices() }
-            )
-            
-            if viewModel.isWriting {
-                Divider()
-                WriteProgressView(
-                    progress: viewModel.progress,
-                    bytesWritten: viewModel.bytesWritten,
-                    totalBytes: viewModel.totalBytes,
-                    statusText: viewModel.statusText,
-                    eta: viewModel.estimatedTimeRemaining,
-                    onCancel: { viewModel.cancelWrite() }
-                )
+            ScrollView {
+                VStack(spacing: Theme.Dimensions.cardSpacing) {
+                    HStack(spacing: Theme.Dimensions.cardSpacing) {
+                        ImageSelectorView(
+                            selectedURL: $viewModel.selectedImageURL,
+                            imageSize: viewModel.imageSize,
+                            isWriting: viewModel.isWriting,
+                            onSelect: { viewModel.selectImage() }
+                        )
+                        
+                        DeviceSelectorView(
+                            devices: viewModel.devices,
+                            selectedDevice: $viewModel.selectedDevice,
+                            isWriting: viewModel.isWriting,
+                            onRefresh: { viewModel.refreshDevices() }
+                        )
+                    }
+                    
+                    if viewModel.isWriting {
+                        WriteProgressCard(
+                            progress: viewModel.progress,
+                            bytesWritten: viewModel.bytesWritten,
+                            totalBytes: viewModel.totalBytes,
+                            statusText: viewModel.statusText,
+                            eta: viewModel.estimatedTimeRemaining,
+                            onCancel: { viewModel.cancelWrite() }
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    }
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 24)
             }
             
             Spacer()
             
-            actionButtonsSection
+            actionButtonSection
         }
-        .padding(24)
-        .frame(minWidth: 520, minHeight: 480)
+        .frame(minWidth: 780, minHeight: 520)
+        .background(Theme.Colors.background)
+        .preferredColorScheme(.dark)
         .alert("确认写入", isPresented: $showingConfirmation) {
             TextField("输入设备名称确认", text: $confirmationInput)
                 .onAppear { confirmationInput = "" }
@@ -69,47 +74,75 @@ struct ContentView: View {
     
     private var headerView: some View {
         HStack(spacing: 16) {
-            Image(systemName: "externaldrive.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(.blue)
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Theme.Colors.accent.opacity(0.15))
+                    .frame(width: 56, height: 56)
+                
+                Image(systemName: "externaldrive.fill")
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundColor(Theme.Colors.accent)
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("BitLoader")
                     .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(Theme.Colors.textPrimary)
+                
                 Text("轻量级 USB 引导盘制作工具")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(Theme.Colors.textSecondary)
             }
             
             Spacer()
         }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 20)
+        .background(
+            Rectangle()
+                .fill(Theme.Colors.backgroundSecondary)
+                .shadow(color: Color.black.opacity(0.3), radius: 4, x: 0, y: 2)
+        )
     }
     
-    private var actionButtonsSection: some View {
+    private var actionButtonSection: some View {
         HStack {
+            Spacer()
+            
             if viewModel.isWriting {
-                Button("取消") {
+                Button("取消写入") {
                     viewModel.cancelWrite()
                 }
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(Theme.Colors.textSecondary)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(12)
                 .keyboardShortcut(.escape, modifiers: [])
             }
-            
-            Spacer()
             
             Button(viewModel.isWriting ? "写入中..." : "开始写入") {
                 if viewModel.canStartWrite {
                     showingConfirmation = true
                 }
             }
-            .keyboardShortcut(.return, modifiers: [])
+            .buttonStyle(PrimaryButtonStyle(isEnabled: viewModel.canStartWrite && !viewModel.isWriting))
             .disabled(!viewModel.canStartWrite || viewModel.isWriting)
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .keyboardShortcut(.return, modifiers: [])
+            
+            Spacer()
         }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 24)
+        .background(
+            Rectangle()
+                .fill(Theme.Colors.backgroundSecondary)
+        )
     }
 }
 
-struct WriteProgressView: View {
+struct WriteProgressCard: View {
     let progress: Double
     let bytesWritten: UInt64
     let totalBytes: UInt64
@@ -118,41 +151,80 @@ struct WriteProgressView: View {
     let onCancel: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("写入进度", systemImage: "3.circle.fill")
-                .font(.headline)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                SwiftUI.ProgressView(value: progress, total: 1.0)
-                    .progressViewStyle(.linear)
-                    .scaleEffect(y: 1.5)
-                
-                HStack {
-                    Text(statusText)
-                        .font(.subheadline)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Theme.Colors.accent.opacity(0.15))
+                        .frame(width: Theme.Dimensions.iconSizeLarge, height: Theme.Dimensions.iconSizeLarge)
                     
-                    Spacer()
-                    
-                    Text("\(Int(progress * 100))%")
-                        .font(.system(.subheadline, design: .monospaced))
-                        .fontWeight(.semibold)
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundColor(Theme.Colors.accent)
                 }
                 
-                if let eta = eta {
-                    HStack {
-                        Image(systemName: "clock")
-                            .foregroundStyle(.secondary)
-                        Text("预计剩余时间: \(FormatUtils.formatDuration(eta))")
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("正在写入")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(Theme.Colors.textPrimary)
+                    
+                    Text(statusText)
+                        .font(.subheadline)
+                        .foregroundColor(Theme.Colors.textSecondary)
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("\(Int(progress * 100))%")
+                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                        .foregroundColor(Theme.Colors.accentLight)
+                    
+                    if let eta = eta {
+                        Text(FormatUtils.formatDuration(eta))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(Theme.Colors.textSecondary)
                     }
                 }
             }
-            .padding(.leading, 28)
+            
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Theme.Colors.cardBorder)
+                    
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(
+                            LinearGradient(
+                                colors: [Theme.Colors.accent, Theme.Colors.accentLight],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(0, geometry.size.width * progress))
+                }
+            }
+            .frame(height: 10)
+            
+            HStack {
+                Text("\(FormatUtils.formatBytes(bytesWritten)) / \(FormatUtils.formatBytes(totalBytes))")
+                    .font(.caption)
+                    .foregroundColor(Theme.Colors.textTertiary)
+                
+                Spacer()
+            }
         }
+        .padding(Theme.Dimensions.cardPadding)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(Theme.Dimensions.cornerRadius)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
+                .stroke(Theme.Colors.accent.opacity(0.3), lineWidth: 1)
+        )
+        .shadow(color: Theme.Colors.accent.opacity(0.2), radius: 8, x: 0, y: 4)
     }
 }
 
-#Preview {
+#Preview("主界面") {
     ContentView()
 }

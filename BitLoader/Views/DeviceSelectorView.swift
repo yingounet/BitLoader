@@ -6,57 +6,119 @@ struct DeviceSelectorView: View {
     let isWriting: Bool
     let onRefresh: () -> Void
     
+    @State private var isRefreshHovered = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("步骤 2: 选择目标设备", systemImage: "2.circle.fill")
-                    .font(.headline)
+            HStack(spacing: 16) {
+                iconView
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    if devices.isEmpty {
+                        Text("正在搜索设备...")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Theme.Colors.textTertiary)
+                        
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .scaleEffect(0.6)
+                                .frame(width: 16, height: 16)
+                            Text("请插入 USB 设备")
+                                .font(.subheadline)
+                                .foregroundColor(Theme.Colors.textTertiary)
+                        }
+                    } else if let device = selectedDevice {
+                        Text(device.displayName)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(Theme.Colors.textPrimary)
+                            .lineLimit(1)
+                        
+                        HStack(spacing: 8) {
+                            Text(device.bsdName)
+                                .font(.subheadline)
+                                .foregroundColor(Theme.Colors.textSecondary)
+                            
+                            if device.isSafeToWrite {
+                                Label("可安全写入", systemImage: "checkmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundColor(Theme.Colors.success)
+                            } else {
+                                Label("请谨慎选择", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                    .foregroundColor(Theme.Colors.warning)
+                            }
+                        }
+                    } else {
+                        devicePicker
+                    }
+                }
                 
                 Spacer()
                 
                 Button(action: onRefresh) {
                     Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(isRefreshHovered ? Theme.Colors.accent : Theme.Colors.textSecondary)
+                        .frame(width: 36, height: 36)
+                        .background(
+                            Circle()
+                                .fill(isRefreshHovered ? Theme.Colors.accent.opacity(0.15) : Color.clear)
+                        )
                 }
-                .buttonStyle(.borderless)
-                .help("刷新设备列表")
+                .buttonStyle(.plain)
                 .disabled(isWriting)
+                .opacity(isWriting ? 0.4 : 1.0)
+                .onHover { hovering in
+                    isRefreshHovered = hovering
+                }
+                .help("刷新设备列表")
             }
             
-            if devices.isEmpty {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                    Text("正在搜索 USB 设备...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.leading, 28)
-            } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    Picker("设备", selection: $selectedDevice) {
-                        Text("请选择 USB 设备").tag(nil as USBDevice?)
-                        ForEach(safeDevices) { device in
-                            HStack {
-                                Text(device.displayName)
-                                if !device.isSafeToWrite {
-                                    Text("⚠️")
-                                }
-                            }
-                            .tag(device as USBDevice?)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .disabled(isWriting)
+            if !devices.isEmpty && selectedDevice == nil {
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textTertiary)
                     
-                    if let device = selectedDevice {
-                        DeviceInfoBadge(device: device)
-                            .padding(.leading, 28)
-                    }
+                    Text("请从上方下拉菜单中选择目标设备")
+                        .font(.caption)
+                        .foregroundColor(Theme.Colors.textTertiary)
                 }
-                .padding(.leading, 28)
             }
         }
+        .cardStyle()
+    }
+    
+    @ViewBuilder
+    private var iconView: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Theme.Colors.accent.opacity(0.15))
+                .frame(width: Theme.Dimensions.iconSizeLarge, height: Theme.Dimensions.iconSizeLarge)
+            
+            Image(systemName: "externaldrive.fill")
+                .font(.system(size: 28, weight: .medium))
+                .foregroundColor(Theme.Colors.accent)
+        }
+    }
+    
+    @ViewBuilder
+    private var devicePicker: some View {
+        Picker("设备", selection: $selectedDevice) {
+            Text("请选择 USB 设备").tag(nil as USBDevice?)
+            ForEach(safeDevices) { device in
+                HStack {
+                    Text(device.displayName)
+                    if !device.isSafeToWrite {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(Theme.Colors.warning)
+                    }
+                }
+                .tag(device as USBDevice?)
+            }
+        }
+        .pickerStyle(.menu)
+        .tint(Theme.Colors.accent)
     }
     
     private var safeDevices: [USBDevice] {
@@ -64,46 +126,7 @@ struct DeviceSelectorView: View {
     }
 }
 
-struct DeviceInfoBadge: View {
-    let device: USBDevice
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: device.isSafeToWrite ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .foregroundStyle(device.isSafeToWrite ? .green : .orange)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(device.isSafeToWrite ? "可安全写入" : "请谨慎选择")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(device.isSafeToWrite ? .green : .orange)
-                
-                Text(device.bsdName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
-            if let mountPoint = device.mountPoint {
-                HStack(spacing: 4) {
-                    Image(systemName: "folder")
-                        .font(.caption)
-                    Text(mountPoint)
-                        .font(.caption)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                .foregroundStyle(.secondary)
-            }
-        }
-        .padding(8)
-        .background(device.isSafeToWrite ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
-        .cornerRadius(6)
-    }
-}
-
-#Preview {
+#Preview("有设备") {
     DeviceSelectorView(
         devices: [
             USBDevice(
@@ -112,7 +135,7 @@ struct DeviceInfoBadge: View {
                 rawDevicePath: "/dev/rdisk2",
                 vendor: "SanDisk",
                 model: "Ultra",
-                size: 16_000_000_000,
+                size: 32_000_000_000,
                 isRemovable: true,
                 isInternal: false,
                 mountPoint: "/Volumes/USB"
@@ -123,5 +146,18 @@ struct DeviceInfoBadge: View {
         onRefresh: {}
     )
     .padding()
-    .frame(width: 500)
+    .frame(width: 520)
+    .background(Theme.Colors.background)
+}
+
+#Preview("无设备") {
+    DeviceSelectorView(
+        devices: [],
+        selectedDevice: .constant(nil),
+        isWriting: false,
+        onRefresh: {}
+    )
+    .padding()
+    .frame(width: 520)
+    .background(Theme.Colors.background)
 }
