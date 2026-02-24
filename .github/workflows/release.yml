@@ -1,0 +1,45 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.0'
+      
+      - name: Build
+        run: |
+          xcodebuild -project BitLoader.xcodeproj \
+            -scheme BitLoader \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      
+      - name: Create DMG
+        run: |
+          mkdir -p dmg_temp
+          cp -R build/Build/Products/Release/BitLoader.app dmg_temp/
+          ln -sf /Applications dmg_temp/Applications
+          hdiutil create -volname "BitLoader" \
+            -srcfolder dmg_temp \
+            -ov -format UDZO \
+            BitLoader-${{ github.ref_name }}.dmg
+      
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: BitLoader-${{ github.ref_name }}.dmg
+          generate_release_notes: true
