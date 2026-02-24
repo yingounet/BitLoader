@@ -1,10 +1,11 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.locale) private var locale
     @State private var viewModel = FlasherViewModel()
     @State private var showingConfirmation = false
     @State private var confirmationInput = ""
-    
+
     var body: some View {
         VStack(spacing: 0) {
             headerView
@@ -50,11 +51,11 @@ struct ContentView: View {
         .frame(minWidth: 780, minHeight: 520)
         .background(Theme.Colors.background)
         .preferredColorScheme(.dark)
-        .alert("确认写入", isPresented: $showingConfirmation) {
-            TextField("输入设备名称确认", text: $confirmationInput)
+        .alert(localizedString("confirmWriteTitle", locale: locale), isPresented: $showingConfirmation) {
+            TextField(localizedString("enterDeviceName", locale: locale), text: $confirmationInput)
                 .onAppear { confirmationInput = "" }
-            Button("取消", role: .cancel) { }
-            Button("确认写入", role: .destructive) {
+            Button("cancel", role: .cancel) { }
+            Button("confirmWriteTitle", role: .destructive) {
                 if viewModel.confirmDeviceName(confirmationInput) {
                     viewModel.startWrite()
                 }
@@ -62,11 +63,11 @@ struct ContentView: View {
             .disabled(!viewModel.confirmDeviceName(confirmationInput))
         } message: {
             if let device = viewModel.selectedDevice {
-                Text("此操作将擦除 \(device.displayName) 上的所有数据。\n请输入设备名称「\(device.bsdName)」以确认。")
+                Text("\(String(format: localizedString("confirmWriteMessage", locale: locale), device.displayName))\n\(String(format: localizedString("confirmWritePrompt", locale: locale), device.bsdName))")
             }
         }
-        .alert("错误", isPresented: $viewModel.showError) {
-            Button("确定") { }
+        .alert(localizedString("error", locale: locale), isPresented: $viewModel.showError) {
+            Button("confirm") { }
         } message: {
             Text(viewModel.errorMessage)
         }
@@ -85,11 +86,11 @@ struct ContentView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text("BitLoader")
+                Text("app.name")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(Theme.Colors.textPrimary)
                 
-                Text("轻量级 USB 引导盘制作工具")
+                Text("app.tagline")
                     .font(.subheadline)
                     .foregroundColor(Theme.Colors.textSecondary)
             }
@@ -110,7 +111,7 @@ struct ContentView: View {
             Spacer()
             
             if viewModel.isWriting {
-                Button("取消写入") {
+                Button("cancelWrite") {
                     viewModel.cancelWrite()
                 }
                 .font(.system(size: 15, weight: .medium))
@@ -122,9 +123,15 @@ struct ContentView: View {
                 .keyboardShortcut(.escape, modifiers: [])
             }
             
-            Button(viewModel.isWriting ? "写入中..." : "开始写入") {
+            Button {
                 if viewModel.canStartWrite {
                     showingConfirmation = true
+                }
+            } label: {
+                if viewModel.isWriting {
+                    Text("writing")
+                } else {
+                    Text("startWrite")
                 }
             }
             .buttonStyle(PrimaryButtonStyle(isEnabled: viewModel.canStartWrite && !viewModel.isWriting))
@@ -164,7 +171,7 @@ struct WriteProgressCard: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("正在写入")
+                    Text("writingProgress")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(Theme.Colors.textPrimary)
                     

@@ -40,9 +40,12 @@ struct ProgressPanelView: View {
                             .font(.subheadline)
                         
                         if let speed = speed {
-                            Text("速度: \(FormatUtils.formatSpeed(speed))")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 4) {
+                                Text("speed")
+                                Text(": \(FormatUtils.formatSpeed(speed))")
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
                     }
                     
@@ -66,7 +69,7 @@ struct ProgressPanelView: View {
             HStack {
                 Spacer()
                 
-                Button("取消") {
+                Button("cancel") {
                     onCancel()
                 }
                 .buttonStyle(.bordered)

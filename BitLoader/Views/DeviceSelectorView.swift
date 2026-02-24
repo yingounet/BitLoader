@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct DeviceSelectorView: View {
+    @Environment(\.locale) private var locale
     let devices: [USBDevice]
     @Binding var selectedDevice: USBDevice?
     let isWriting: Bool
     let onRefresh: () -> Void
-    
+
     @State private var isRefreshHovered = false
     
     var body: some View {
@@ -15,7 +16,7 @@ struct DeviceSelectorView: View {
                 
                 VStack(alignment: .leading, spacing: 6) {
                     if devices.isEmpty {
-                        Text("正在搜索设备...")
+                        Text("searchingDevices")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(Theme.Colors.textTertiary)
                         
@@ -23,7 +24,7 @@ struct DeviceSelectorView: View {
                             ProgressView()
                                 .scaleEffect(0.6)
                                 .frame(width: 16, height: 16)
-                            Text("请插入 USB 设备")
+                            Text("insertUSB")
                                 .font(.subheadline)
                                 .foregroundColor(Theme.Colors.textTertiary)
                         }
@@ -39,11 +40,11 @@ struct DeviceSelectorView: View {
                                 .foregroundColor(Theme.Colors.textSecondary)
                             
                             if device.isSafeToWrite {
-                                Label("可安全写入", systemImage: "checkmark.circle.fill")
+                                Label("safeToWrite", systemImage: "checkmark.circle.fill")
                                     .font(.caption)
                                     .foregroundColor(Theme.Colors.success)
                             } else {
-                                Label("请谨慎选择", systemImage: "exclamationmark.triangle.fill")
+                                Label("proceedWithCaution", systemImage: "exclamationmark.triangle.fill")
                                     .font(.caption)
                                     .foregroundColor(Theme.Colors.warning)
                             }
@@ -71,7 +72,7 @@ struct DeviceSelectorView: View {
                 .onHover { hovering in
                     isRefreshHovered = hovering
                 }
-                .help("刷新设备列表")
+                .help(localizedString("refreshDeviceList", locale: locale))
             }
             
             if !devices.isEmpty && selectedDevice == nil {
@@ -80,7 +81,7 @@ struct DeviceSelectorView: View {
                         .font(.caption)
                         .foregroundColor(Theme.Colors.textTertiary)
                     
-                    Text("请从上方下拉菜单中选择目标设备")
+                    Text("selectFromDropdown")
                         .font(.caption)
                         .foregroundColor(Theme.Colors.textTertiary)
                 }
@@ -104,8 +105,8 @@ struct DeviceSelectorView: View {
     
     @ViewBuilder
     private var devicePicker: some View {
-        Picker("设备", selection: $selectedDevice) {
-            Text("请选择 USB 设备").tag(nil as USBDevice?)
+        Picker("device", selection: $selectedDevice) {
+            Text("selectUSBDevice").tag(nil as USBDevice?)
             ForEach(safeDevices) { device in
                 HStack {
                     Text(device.displayName)

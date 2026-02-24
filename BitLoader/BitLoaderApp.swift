@@ -4,7 +4,7 @@ import SwiftUI
 struct BitLoaderApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainWindowContent()
                 .frame(minWidth: 780, minHeight: 520)
         }
         .windowStyle(.automatic)
@@ -13,21 +13,21 @@ struct BitLoaderApp: App {
             CommandGroup(replacing: .newItem) { }
             
             CommandGroup(after: .appInfo) {
-                Button("检查更新...") {
+                Button(localizedString("checkUpdates", locale: LocalizationManager.shared.locale)) {
                     checkForUpdates()
                 }
                 .keyboardShortcut("U", modifiers: .command)
             }
             
-            CommandMenu("工具") {
-                Button("刷新设备列表") {
+            CommandMenu(localizedString("menu.tools", locale: LocalizationManager.shared.locale)) {
+                Button(localizedString("refreshDeviceList", locale: LocalizationManager.shared.locale)) {
                     NotificationCenter.default.post(name: .refreshDevices, object: nil)
                 }
                 .keyboardShortcut("R", modifiers: .command)
                 
                 Divider()
                 
-                Button("校验镜像文件...") {
+                Button(localizedString("verifyImage", locale: LocalizationManager.shared.locale)) {
                     NotificationCenter.default.post(name: .verifyImage, object: nil)
                 }
                 .keyboardShortcut("V", modifiers: .command)
@@ -35,12 +35,36 @@ struct BitLoaderApp: App {
         }
         
         Settings {
-            SettingsView()
+            SettingsWindowContent()
         }
     }
-    
+}
+
+/// 主窗口内容：观察 LocalizationManager，切换语言时自动刷新界面。
+private struct MainWindowContent: View {
+    private var localization = LocalizationManager.shared
+
+    var body: some View {
+        ContentView()
+            .environment(\.locale, localization.locale)
+            .id(localization.currentLanguage.rawValue)
+    }
+}
+
+/// 设置窗口内容：注入当前语言，使设置页内的 Text("key") 等随语言切换。
+private struct SettingsWindowContent: View {
+    private var localization = LocalizationManager.shared
+
+    var body: some View {
+        SettingsView()
+            .environment(\.locale, localization.locale)
+            .id(localization.currentLanguage.rawValue)
+    }
+}
+
+extension BitLoaderApp {
     private func checkForUpdates() {
-        if let url = URL(string: "https://github.com/yingouqlj/bitloader/releases") {
+        if let url = URL(string: "https://github.com/yingounet/BitLoader/releases") {
             NSWorkspace.shared.open(url)
         }
     }
@@ -64,12 +88,12 @@ struct SettingsView: View {
                 autoEject: $autoEject
             )
             .tabItem {
-                Label("通用", systemImage: "gear")
+                Label("settings.general", systemImage: "gear")
             }
             
             AboutSettingsView()
                 .tabItem {
-                    Label("关于", systemImage: "info.circle")
+                    Label("settings.about", systemImage: "info.circle")
                 }
         }
         .frame(width: 400, height: 300)
@@ -81,17 +105,28 @@ struct GeneralSettingsView: View {
     @Binding var verifyAfterWrite: Bool
     @Binding var showConfirmation: Bool
     @Binding var autoEject: Bool
-    
+    @Bindable private var localization = LocalizationManager.shared
+
     var body: some View {
         Form {
-            Section("写入选项") {
-                Toggle("写入后验证数据", isOn: $verifyAfterWrite)
-                Toggle("写入前显示确认对话框", isOn: $showConfirmation)
-                Toggle("写入完成后自动弹出设备", isOn: $autoEject)
+            Section("writeOptions") {
+                Toggle("verifyAfterWrite", isOn: $verifyAfterWrite)
+                Toggle("showConfirmation", isOn: $showConfirmation)
+                Toggle("autoEject", isOn: $autoEject)
             }
             
-            Section("安全") {
-                Text("此应用需要管理员权限才能写入磁盘。")
+            Section("language.display") {
+                Picker(selection: $localization.currentLanguage) {
+                    ForEach(AppLanguage.allCases) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                } label: {
+                    Label("language.display", systemImage: "globe")
+                }
+            }
+            
+            Section("security") {
+                Text("adminRequired")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -102,6 +137,8 @@ struct GeneralSettingsView: View {
 }
 
 struct AboutSettingsView: View {
+    @Environment(\.locale) private var locale
+
     var body: some View {
         VStack(spacing: 16) {
             ZStack {
@@ -114,15 +151,15 @@ struct AboutSettingsView: View {
                     .foregroundColor(Theme.Colors.accent)
             }
             
-            Text("BitLoader")
+            Text("app.name")
                 .font(.title)
                 .fontWeight(.bold)
                 .foregroundColor(Theme.Colors.textPrimary)
             
-            Text("版本 1.0.0")
+            Text("\(localizedString("version", locale: locale)) 1.0.0")
                 .foregroundColor(Theme.Colors.textSecondary)
             
-            Text("轻量级 USB 引导盘制作工具")
+            Text("app.tagline")
                 .font(.subheadline)
                 .foregroundColor(Theme.Colors.textSecondary)
             
@@ -130,13 +167,17 @@ struct AboutSettingsView: View {
                 .background(Theme.Colors.cardBorder)
             
             VStack(spacing: 8) {
-                Link("GitHub", destination: URL(string: "https://github.com/yingouqlj/bitloader")!)
-                Link("报告问题", destination: URL(string: "https://github.com/yingouqlj/bitloader/issues")!)
+                Link(destination: URL(string: "https://github.com/yingounet/BitLoader")!) {
+                    Text("github")
+                }
+                Link(destination: URL(string: "https://github.com/yingounet/BitLoader/issues")!) {
+                    Text("reportIssue")
+                }
             }
             
             Spacer()
             
-            Text("© 2026 BitLoader")
+            Text("app.copyright")
                 .font(.caption)
                 .foregroundColor(Theme.Colors.textTertiary)
         }

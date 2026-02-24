@@ -25,7 +25,7 @@ struct ImageSelectorView: View {
                                 .foregroundColor(Theme.Colors.textSecondary)
                             
                             if CompressionHandler.isCompressed(url: url) {
-                                Text("压缩文件")
+                                Text("compressedFile")
                                     .font(.caption)
                                     .fontWeight(.medium)
                                     .padding(.horizontal, 8)
@@ -36,11 +36,11 @@ struct ImageSelectorView: View {
                             }
                         }
                     } else {
-                        Text("未选择文件")
+                        Text("noFileSelected")
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(Theme.Colors.textTertiary)
                         
-                        Text("点击右侧按钮选择镜像文件")
+                        Text("clickToSelect")
                             .font(.subheadline)
                             .foregroundColor(Theme.Colors.textTertiary)
                     }
@@ -49,7 +49,7 @@ struct ImageSelectorView: View {
                 Spacer()
                 
                 Button(action: onSelect) {
-                    Text("选择...")
+                    Text("selectFile")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white)
                         .padding(.horizontal, 20)
@@ -67,7 +67,7 @@ struct ImageSelectorView: View {
                     .font(.caption)
                     .foregroundColor(Theme.Colors.textTertiary)
                 
-                Text("支持 ISO, IMG, DMG, ZIP, GZ, XZ 等格式")
+                Text("supportedFormats")
                     .font(.caption)
                     .foregroundColor(Theme.Colors.textTertiary)
             }
